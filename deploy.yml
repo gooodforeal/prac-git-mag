@@ -1,14 +1,16 @@
 ---
-- name: Развернуть веб-приложение на подчиненной машине
+- name: CI/CD — доставка и развертывание веб-приложения
   hosts: web
   tasks:
-    - name: Установить nginx
+    - name: Установить nginx и curl
       apt:
-        name: nginx
+        name:
+          - nginx
+          - curl
         state: present
         update_cache: yes
 
-    - name: Скопировать страницу приложения
+    - name: Скопировать собранную страницу
       copy:
         src: index.html
         dest: /var/www/html/index.html
@@ -18,3 +20,12 @@
         name: nginx
         state: started
         enabled: yes
+
+    - name: Проверить, что сайт отвечает
+      command: curl -sf http://127.0.0.1
+      register: site
+      changed_when: false
+
+    - name: Показать ответ сайта
+      debug:
+        msg: "{{ site.stdout }}"

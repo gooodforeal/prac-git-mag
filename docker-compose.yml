@@ -1,0 +1,36 @@
+services:
+  node1:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    image: ansible-node
+    container_name: node1
+    hostname: node1
+    ports:
+      - "8080:80"
+    networks:
+      - ansible-net
+
+  master:
+    build:
+      context: .
+      dockerfile: master.Dockerfile
+    image: ansible-master
+    container_name: master
+    hostname: master
+    ports:
+      - "8081:8080"
+    volumes:
+      - .:/ansible
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ansible-net
+
+volumes:
+  jenkins_home:
+    name: jenkins_home
+
+networks:
+  ansible-net:
+    name: ansible-net
