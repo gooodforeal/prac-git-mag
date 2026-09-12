@@ -34,3 +34,4 @@ volumes:
 networks:
   ansible-net:
     name: ansible-net
+    external: true
