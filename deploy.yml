@@ -18,7 +18,7 @@
         sudo docker run -d
         --name {{ app_container }}
         --network ansible-net
-        -p 5000:5000
+        -p 8082:5000
         -v todo_data:/data
         --restart unless-stopped
         {{ app_image }}

@@ -9,9 +9,9 @@ sudo docker rm -f "$CONTAINER" 2>/dev/null || true
 sudo docker run -d \
   --name "$CONTAINER" \
   --network ansible-net \
-  -p 5000:5000 \
+  -p 8082:5000 \
   -v todo_data:/data \
   --restart unless-stopped \
   "$IMAGE"
 
-echo "Приложение: http://localhost:5000"
+echo "Приложение: http://localhost:8082"
