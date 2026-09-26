@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Список задач</title>
+  <style>
+    :root {
+      --bg: #f3f0e8;
+      --ink: #1c1a16;
+      --muted: #6b6558;
+      --accent: #2f6f5e;
+      --card: #fffdf8;
+      --line: #d9d2c3;
+      --done: #8a8478;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #e7f0ea, transparent 40%),
+        linear-gradient(180deg, #f7f4ee, var(--bg));
+    }
+    main {
+      width: min(640px, calc(100% - 2rem));
+      margin: 3rem auto;
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+    .lead {
+      margin: 0 0 1.5rem;
+      color: var(--muted);
+    }
+    form.add {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      font-size: 1rem;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.65rem;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    li.done .title {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+    .title { flex: 1; }
+    .actions {
+      display: flex;
+      gap: 0.35rem;
+    }
+    .empty {
+      padding: 1.25rem;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Список задач</h1>
+    <p class="lead">Flask + SQLite</p>
+
+    <form class="add" action="{{ url_for('add') }}" method="post">
+      <input type="text" name="title" placeholder="Новая задача" autofocus required>
+      <button type="submit">Добавить</button>
+    </form>
+
+    {% if tasks %}
+      <ul>
+        {% for task in tasks %}
+          <li class="{{ 'done' if task['done'] else '' }}">
+            <span class="title">{{ task['title'] }}</span>
+            <div class="actions">
+              <form action="{{ url_for('toggle', task_id=task['id']) }}" method="post">
+                <button class="ghost" type="submit">
+                  {{ 'Вернуть' if task['done'] else 'Готово' }}
+                </button>
+              </form>
+              <form action="{{ url_for('delete', task_id=task['id']) }}" method="post">
+                <button class="ghost" type="submit">Удалить</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty">Пока пусто — добавьте первую задачу</div>
+    {% endif %}
+  </main>
+</body>
+</html>

@@ -4,3 +4,12 @@ secret.txt
 file1.txt
 file2.txt
 notes.md
+build/
+*.db
+__pycache__/
+.venv/
+Jenkinsfile
+master.Dockerfile
+node.Dockerfile
+docker-compose.yml
+scripts/

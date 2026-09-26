@@ -1,2 +1,6 @@
 secret.txt
 build/
+*.db
+__pycache__/
+*.pyc
+.venv/

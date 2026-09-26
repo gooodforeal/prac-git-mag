@@ -1,31 +1,42 @@
 ---
-- name: CI/CD — доставка и развертывание веб-приложения
-  hosts: web
+- name: Поднять Flask todo-app в Docker на master
+  hosts: master
+  connection: local
+  gather_facts: false
+  vars:
+    app_image: "{{ image | default('todo-app:latest') }}"
+    app_container: "{{ container_name | default('todo-app') }}"
   tasks:
-    - name: Установить nginx и curl
-      apt:
-        name:
-          - nginx
-          - curl
-        state: present
-        update_cache: yes
+    - name: Остановить старый контейнер
+      shell: sudo docker rm -f {{ app_container }}
+      register: rm
+      changed_when: "'No such container' not in (rm.stderr | default(''))"
+      failed_when: false
 
-    - name: Скопировать собранную страницу
-      copy:
-        src: index.html
-        dest: /var/www/html/index.html
+    - name: Запустить контейнер на сети ansible-net
+      shell: >
+        sudo docker run -d
+        --name {{ app_container }}
+        --network ansible-net
+        -p 5000:5000
+        -v todo_data:/data
+        --restart unless-stopped
+        {{ app_image }}
+      register: run
 
-    - name: Запустить nginx
-      service:
-        name: nginx
-        state: started
-        enabled: yes
-
-    - name: Проверить, что сайт отвечает
-      command: curl -sf http://127.0.0.1
-      register: site
-      changed_when: false
-
-    - name: Показать ответ сайта
+    - name: Показать id контейнера
       debug:
-        msg: "{{ site.stdout }}"
+        msg: "{{ run.stdout }}"
+
+    - name: Дождаться готовности /health
+      uri:
+        url: "http://{{ app_container }}:5000/health"
+        return_content: yes
+      register: health
+      until: health.status == 200
+      retries: 10
+      delay: 1
+
+    - name: Показать health
+      debug:
+        msg: "{{ health.json | default(health.content) }}"
