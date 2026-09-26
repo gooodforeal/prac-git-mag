@@ -1,42 +1,70 @@
 ---
-- name: Поднять Flask todo-app в Docker на master
-  hosts: master
+- name: Сохранить образ на master (локальный Docker)
+  hosts: local
   connection: local
   gather_facts: false
   vars:
     app_image: "{{ image | default('todo-app:latest') }}"
-    app_container: "{{ container_name | default('todo-app') }}"
+    image_tar_local: /var/jenkins_home/todo-app.tar
   tasks:
-    - name: Остановить старый контейнер
-      shell: sudo docker rm -f {{ app_container }}
-      register: rm
-      changed_when: "'No such container' not in (rm.stderr | default(''))"
-      failed_when: false
+    - name: docker save
+      shell: sudo docker save {{ app_image }} > {{ image_tar_local }}
+      args:
+        executable: /bin/bash
 
-    - name: Запустить контейнер на сети ansible-net
+- name: Запустить контейнер на node1
+  hosts: web
+  gather_facts: false
+  vars:
+    app_image: "{{ image | default('todo-app:latest') }}"
+    app_container: "{{ container_name | default('todo-app') }}"
+    image_tar_local: /var/jenkins_home/todo-app.tar
+    image_tar_remote: /tmp/todo-app.tar
+  tasks:
+    - name: Дождаться Docker на node1
+      shell: docker info
+      register: docker_info
+      until: docker_info.rc == 0
+      retries: 30
+      delay: 2
+      changed_when: false
+
+    - name: Скопировать образ на node1
+      copy:
+        src: "{{ image_tar_local }}"
+        dest: "{{ image_tar_remote }}"
+        mode: "0644"
+
+    - name: Загрузить образ
+      shell: docker load -i {{ image_tar_remote }}
+
+    - name: Остановить старый контейнер
+      shell: docker rm -f {{ app_container }}
+      failed_when: false
+      changed_when: true
+
+    - name: Запустить todo-app на node1
       shell: >
-        sudo docker run -d
+        docker run -d
         --name {{ app_container }}
-        --network ansible-net
-        -p 8082:5000
+        -p 5000:5000
         -v todo_data:/data
         --restart unless-stopped
         {{ app_image }}
       register: run
 
-    - name: Показать id контейнера
+    - name: id контейнера
       debug:
         msg: "{{ run.stdout }}"
 
-    - name: Дождаться готовности /health
-      uri:
-        url: "http://{{ app_container }}:5000/health"
-        return_content: yes
+    - name: Health-check с node1
+      shell: curl -sf http://127.0.0.1:5000/health
       register: health
-      until: health.status == 200
-      retries: 10
+      until: health.rc == 0
+      retries: 15
       delay: 1
+      changed_when: false
 
-    - name: Показать health
+    - name: Ответ /health
       debug:
-        msg: "{{ health.json | default(health.content) }}"
+        msg: "{{ health.stdout }}"

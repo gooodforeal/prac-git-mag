@@ -6,8 +6,9 @@ services:
     image: ansible-node
     container_name: node1
     hostname: node1
+    privileged: true
     ports:
-      - "8080:80"
+      - "8082:5000"
     networks:
       - ansible-net
 

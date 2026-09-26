@@ -12,4 +12,5 @@ Jenkinsfile
 master.Dockerfile
 node.Dockerfile
 docker-compose.yml
-scripts/
+scripts/simple-job.sh
+scripts/setup-ssh.sh
